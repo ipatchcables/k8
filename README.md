@@ -92,3 +92,7 @@ curl -s -H "X-aws-ec2-metadata-token: $T" \
       http://169.254.169.254/latest/meta-data/iam/security-credentials/$ROLE
 
 ```
+
+```
+kubectl get pods -A -o wide --token "$nodeimds" --field-selector spec.nodeName=<nodename>
+```
