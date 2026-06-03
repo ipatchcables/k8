@@ -96,3 +96,13 @@ curl -s -H "X-aws-ec2-metadata-token: $T" \
 ```
 kubectl get pods -A -o wide --token "$nodeimds" --field-selector spec.nodeName=<nodename>
 ```
+
+
+```
+kubectl get pod <pod-name> -o jsonpath='
+imagePullSecrets: {.spec.imagePullSecrets[*].name}{"\n"}
+volume secrets: {.spec.volumes[*].secret.secretName}{"\n"}
+env secretKeyRef: {.spec.containers[*].env[*].valueFrom.secretKeyRef.name}{"\n"}
+envFrom secretRef: {.spec.containers[*].envFrom[*].secretRef.name}{"\n"}
+'
+```
