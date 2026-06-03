@@ -1,3 +1,4 @@
+```
 kubectl get pods -A --field-selector spec.nodeName=<node-name> -o json \
   | jq -r '.items[] | select(
       .spec.hostNetwork == true or .spec.hostPID == true
@@ -5,13 +6,15 @@ kubectl get pods -A --field-selector spec.nodeName=<node-name> -o json \
       or any(.spec.volumes[]?; has("hostPath"))
     ) | "\(.metadata.namespace)/\(.metadata.name)"'
 
-
+```
+```
 
     kubectl get pods -A --field-selector spec.nodeName=<node-name> \
   -o jsonpath='{range .items[*]}{.metadata.namespace}{"/"}{.metadata.name}{"\t"}{.spec.hostNetwork}{"\t"}{.spec.hostPID}{"\t"}{.spec.containers[*].securityContext.privileged}{"\n"}{end}' \
   | grep -E 'true'
+```
 
-
+```
   kubectl get pods -A --field-selector spec.nodeName=<node-name> -o json \
   | jq -r '
     .items[]
@@ -42,3 +45,4 @@ kubectl get pods -A --field-selector spec.nodeName=<node-name> -o json \
     | "\(.ns)/\(.name)\t\(.reasons | join(", "))"
   ' \
   | column -t -s $'\t'
+```
