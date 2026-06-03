@@ -106,3 +106,6 @@ env secretKeyRef: {.spec.containers[*].env[*].valueFrom.secretKeyRef.name}{"\n"}
 envFrom secretRef: {.spec.containers[*].envFrom[*].secretRef.name}{"\n"}
 '
 ```
+```
+the Node authorizer deliberately boxes in what a compromised node can do inside the cluster, which is good — but it does nothing to constrain the IAM role attached to that node. An over-permissioned node instance role turns a single pod escape into account-wide AWS compromise. The remediation half of the stage is scoping that node role down and demonstrating that the same aws sts pivot now hits nothing useful.
+```
