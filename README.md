@@ -109,3 +109,36 @@ envFrom secretRef: {.spec.containers[*].envFrom[*].secretRef.name}{"\n"}
 ```
 the Node authorizer deliberately boxes in what a compromised node can do inside the cluster, which is good — but it does nothing to constrain the IAM role attached to that node. An over-permissioned node instance role turns a single pod escape into account-wide AWS compromise. The remediation half of the stage is scoping that node role down and demonstrating that the same aws sts pivot now hits nothing useful.
 ```
+```
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Regions to scan (edit as needed, or pull all enabled regions)
+REGIONS=("us-east-1" "us-west-2")
+
+for REGION in "${REGIONS[@]}"; do
+    ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+    REGISTRY="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
+
+    # One token per registry
+    TOKEN=$(aws ecr get-login-password --region "$REGION")
+
+    echo "==================================================================="
+    echo "Registry : $REGISTRY"
+    echo "Username : AWS"
+    echo "Password : $TOKEN"
+    echo "==================================================================="
+
+    # Walk every repo + every tag
+    for REPO in $(aws ecr describe-repositories --region "$REGION" \
+                    --query 'repositories[].repositoryName' --output text); do
+        aws ecr describe-images --region "$REGION" --repository-name "$REPO" \
+            --query 'imageDetails[].imageTags' --output text 2>/dev/null \
+        | tr '\t' '\n' | while read -r TAG; do
+            [ -z "$TAG" ] && continue
+            echo "${REGISTRY}/${REPO}:${TAG}"
+        done
+    done
+    echo ""
+done
+```
