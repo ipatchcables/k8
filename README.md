@@ -46,3 +46,29 @@ kubectl get pods -A --field-selector spec.nodeName=<node-name> -o json \
   ' \
   | column -t -s $'\t'
 ```
+
+
+```
+python3 -c '
+import urllib.request as u
+t=u.urlopen(u.Request("http://169.254.169.254/latest/api/token",method="PUT",
+  headers={"X-aws-ec2-metadata-token-ttl-seconds":"60"})).read().decode()
+role=u.urlopen(u.Request("http://169.254.169.254/latest/meta-data/iam/security-credentials/",
+  headers={"X-aws-ec2-metadata-token":t})).read().decode()
+print(role)
+print(u.urlopen(u.Request("http://169.254.169.254/latest/meta-data/iam/security-credentials/"+role,
+  headers={"X-aws-ec2-metadata-token":t})).read().decode())
+'
+```
+
+
+```
+exec 3<>/dev/tcp/169.254.169.254/80
+printf 'PUT /latest/api/token HTTP/1.1\r\nHost: 169.254.169.254\r\nX-aws-ec2-metadata-token-ttl-seconds: 60\r\nConnection: close\r\n\r\n' >&3
+TOK=$(cat <&3 | tail -1)
+
+# use it
+exec 3<>/dev/tcp/169.254.169.254/80
+printf 'GET /latest/meta-data/iam/security-credentials/ HTTP/1.1\r\nHost: 169.254.169.254\r\nX-aws-ec2-metadata-token: %s\r\nConnection: close\r\n\r\n' "$TOK" >&3
+cat <&3
+```
