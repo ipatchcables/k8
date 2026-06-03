@@ -142,3 +142,19 @@ for REGION in "${REGIONS[@]}"; do
     echo ""
 done
 ```
+```
+# Login once per registry
+aws ecr get-login-password --region us-east-1 \
+  | docker login --username AWS --password-stdin <acct-id>.dkr.ecr.us-east-1.amazonaws.com
+
+# Pull + save to tarball
+IMG=<acct-id>.dkr.ecr.us-east-1.amazonaws.com/<repo>:<tag>
+docker pull "$IMG"
+docker save "$IMG" -o "$(echo "$IMG" | tr '/:' '__').tar"
+
+```
+
+```
+mkdir review && tar -xf image__repo__tag.tar -C review
+
+```
