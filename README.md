@@ -180,3 +180,21 @@ kubectl get pods -A -o json | jq -r '
     ([(.spec.volumes // [])[] | has("hostPath")] | any)
   ]) | @tsv' | column -t
 ```
+
+```
+kubectl get pods -A -o custom-columns=\
+'NS:.metadata.namespace,'\
+'POD:.metadata.name,'\
+'SA:.spec.serviceAccountName,'\
+'AUTOMOUNT:.spec.automountServiceAccountToken'
+```
+
+```
+kubectl get pods -A -o json | jq -r '
+  ["NS","POD","SA"],
+  (.items[]
+   | select(any(.spec.volumes[]?;
+       has("projected") and any(.projected.sources[]?; has("serviceAccountToken"))))
+   | [.metadata.namespace, .metadata.name, (.spec.serviceAccountName // "default")]
+  ) | @tsv' | column -t
+```
