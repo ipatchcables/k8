@@ -158,3 +158,12 @@ docker save "$IMG" -o "$(echo "$IMG" | tr '/:' '__').tar"
 mkdir review && tar -xf image__repo__tag.tar -C review
 
 ```
+
+
+```
+kubectl get ns -o custom-columns=\
+'NAME:.metadata.name,'\
+'ENFORCE:.metadata.labels.pod-security\.kubernetes\.io/enforce,'\
+'WARN:.metadata.labels.pod-security\.kubernetes\.io/warn,'\
+'AUDIT:.metadata.labels.pod-security\.kubernetes\.io/audit'
+```
