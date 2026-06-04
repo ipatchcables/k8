@@ -167,3 +167,16 @@ kubectl get ns -o custom-columns=\
 'WARN:.metadata.labels.pod-security\.kubernetes\.io/warn,'\
 'AUDIT:.metadata.labels.pod-security\.kubernetes\.io/audit'
 ```
+```
+kubectl get pods -A -o json | jq -r '
+  ["NS","POD","hostPID","hostNet","hostIPC","privileged","hostPath"],
+  (.items[] | [
+    .metadata.namespace,
+    .metadata.name,
+    (.spec.hostPID // false),
+    (.spec.hostNetwork // false),
+    (.spec.hostIPC // false),
+    ([.spec.containers[].securityContext.privileged] | any),
+    ([(.spec.volumes // [])[] | has("hostPath")] | any)
+  ]) | @tsv' | column -t
+```
